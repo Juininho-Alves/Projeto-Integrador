@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base_dashboard.html" %}
 
 {% block title %}Perfil - Conectando Serviços{% endblock %}
 
@@ -21,12 +21,7 @@
                 </div>
 
                 <hr>
-
-                <form method="POST" action="{{ url_for('excluir_proprio_usuario') }}"
-                    onsubmit="return confirm('Tem certeza que deseja excluir sua conta? Esta ação não pode ser desfeita.')">
-                    <button type="submit" class="btn-danger btn-block">Excluir minha conta</button>
-                </form>
-
+                
                 <div class="auth-footer mt-4 text-center">
                     <a href="{{ url_for('dashboard') }}" class="btn-secondary">Voltar para o dashboard</a>
                 </div>

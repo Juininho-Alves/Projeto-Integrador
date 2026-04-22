@@ -71,6 +71,10 @@ body {
     color: var(--primary-color);
 }
 
+.branco {
+    color: white !important;
+}
+
 .btn-primary {
     background: var(--primary-color);
     color: white;

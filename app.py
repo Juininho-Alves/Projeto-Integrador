@@ -48,6 +48,7 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
 
+
 @login_manager.user_loader
 def load_user(user_id):
     try:
@@ -55,12 +56,15 @@ def load_user(user_id):
     except Exception:
         return None
 
+
 # ---------- CPF validator ----------
 cpf_validator = CPF()
 
 # --------------------------
 # ADMIN DECORATOR
 # --------------------------
+
+
 def admin_required(f):
     """Garante que apenas usuários com user_type == 'admin' acessem a rota."""
     @wraps(f)
@@ -77,6 +81,8 @@ def admin_required(f):
 # --------------------------
 # HELPERS
 # --------------------------
+
+
 def normalize_cpf_masked(cpf_masked: str) -> str:
     """Converte qualquer entrada para formato 000.000.000-00 (se possível)."""
     if not cpf_masked:
@@ -86,6 +92,7 @@ def normalize_cpf_masked(cpf_masked: str) -> str:
         return cpf_masked
     return f"{digits[0:3]}.{digits[3:6]}.{digits[6:9]}-{digits[9:11]}"
 
+
 def validate_cep_garanhuns(cep: str):
     """Valida via ViaCEP e garante Garanhuns/PE. Retorna dict ou None."""
     if not cep:
@@ -94,7 +101,8 @@ def validate_cep_garanhuns(cep: str):
     if len(cep_digits) != 8:
         return None
     try:
-        r = requests.get(f"https://viacep.com.br/ws/{cep_digits}/json/", timeout=5)
+        r = requests.get(
+            f"https://viacep.com.br/ws/{cep_digits}/json/", timeout=5)
         if not r.ok:
             return None
         data = r.json()
@@ -117,10 +125,12 @@ def validate_cep_garanhuns(cep: str):
 # ROTAS PÚBLICAS / FRONT
 # --------------------------
 
+
 @app.route('/')
 def index():
     categories = ServiceCategory.query.order_by(ServiceCategory.name).all()
-    professionals = Professional.query.order_by(Professional.created_at.desc()).limit(6).all()
+    professionals = Professional.query.order_by(
+        Professional.created_at.desc()).limit(6).all()
     return render_template('index.html', categories=categories, professionals=professionals)
 
 
@@ -191,6 +201,8 @@ def register():
 # --------------------------
 # LOGIN
 # --------------------------
+
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
@@ -212,6 +224,8 @@ def login():
 # --------------------------
 # LOGOUT
 # --------------------------
+
+
 @app.route('/logout')
 @login_required
 def logout():
@@ -221,6 +235,8 @@ def logout():
 # --------------------------
 # SEARCH
 # --------------------------
+
+
 @app.route('/search')
 def search():
     name = (request.args.get('name') or '').strip()
@@ -243,9 +259,11 @@ def search():
 
     try:
         if min_price:
-            query = query.filter(Professional.starting_price >= float(min_price))
+            query = query.filter(
+                Professional.starting_price >= float(min_price))
         if max_price:
-            query = query.filter(Professional.starting_price <= float(max_price))
+            query = query.filter(
+                Professional.starting_price <= float(max_price))
     except ValueError:
         # se preço inválido, ignora o filtro
         pass
@@ -257,6 +275,8 @@ def search():
 # --------------------------
 # COMPLETAR PERFIL PROFISSIONAL
 # --------------------------
+
+
 @app.route('/completar-perfil-profissional', methods=['GET', 'POST'])
 @login_required
 def complete_professional_profile():
@@ -269,7 +289,8 @@ def complete_professional_profile():
 
     if request.method == 'POST':
         try:
-            category_id = int(request.form.get('category_id')) if request.form.get('category_id') else None
+            category_id = int(request.form.get('category_id')
+                              ) if request.form.get('category_id') else None
         except ValueError:
             category_id = None
 
@@ -277,8 +298,10 @@ def complete_professional_profile():
             user_id=current_user.id,
             category_id=category_id,
             bio=(request.form.get('bio') or '').strip(),
-            experience_years=int(request.form.get('experience_years')) if request.form.get('experience_years') else None,
-            starting_price=float(request.form.get('starting_price')) if request.form.get('starting_price') else None,
+            experience_years=int(request.form.get('experience_years')) if request.form.get(
+                'experience_years') else None,
+            starting_price=float(request.form.get('starting_price')) if request.form.get(
+                'starting_price') else None,
             response_time=request.form.get('response_time') or '24 horas',
             created_at=datetime.utcnow()
         )
@@ -293,6 +316,8 @@ def complete_professional_profile():
 # --------------------------
 # DASHBOARD
 # --------------------------
+
+
 @app.route('/dashboard')
 @login_required
 def dashboard():
@@ -300,18 +325,23 @@ def dashboard():
         prof = Professional.query.filter_by(user_id=current_user.id).first()
         if not prof:
             return redirect(url_for('complete_professional_profile'))
-        requests_list = ServiceRequest.query.filter_by(professional_id=prof.id).order_by(ServiceRequest.created_at.desc()).all()
+        requests_list = ServiceRequest.query.filter_by(
+            professional_id=prof.id).order_by(ServiceRequest.created_at.desc()).all()
         return render_template('dashboard_professional.html', professional=prof, requests=requests_list)
     else:
-        requests_list = ServiceRequest.query.filter_by(client_id=current_user.id).order_by(ServiceRequest.created_at.desc()).all()
+        requests_list = ServiceRequest.query.filter_by(
+            client_id=current_user.id).order_by(ServiceRequest.created_at.desc()).all()
         return render_template('dashboard_client.html', requests=requests_list)
 
 # --------------------------
 # PERFIL
 # --------------------------
+
+
 @app.route('/perfil')
 @login_required
 def perfil():
+
     user = User.query.get_or_404(current_user.id)
     prof = Professional.query.filter_by(user_id=user.id).first()
     return render_template("perfil.html", user=user, prof=prof)
@@ -328,11 +358,10 @@ def profissional_solicitar():
     return render_template("professional_solicitar.html", user=user, professional=prof)
 
 
-
 # --------------------------
 # EXCLUIR PRÓPRIO USUÁRIO
 # --------------------------
-@app.route('/excluir_proprio_usuario', methods=['POST'])
+@app.route('/excluir_proprio_usuario')
 @login_required
 def excluir_proprio_usuario():
     user = User.query.get(int(current_user.id))
@@ -346,14 +375,17 @@ def excluir_proprio_usuario():
     logout_user()
 
     # Excluir requests onde ele é cliente
-    ServiceRequest.query.filter(ServiceRequest.client_id == user_id).delete(synchronize_session=False)
+    ServiceRequest.query.filter(ServiceRequest.client_id == user_id).delete(
+        synchronize_session=False)
 
     # Se for profissional, excluir requests onde profissional é o perfil do usuário
     prof = Professional.query.filter_by(user_id=user_id).first()
     if prof:
-        ServiceRequest.query.filter(ServiceRequest.professional_id == prof.id).delete(synchronize_session=False)
+        ServiceRequest.query.filter(ServiceRequest.professional_id == prof.id).delete(
+            synchronize_session=False)
         # excluir reviews relacionadas ao profissional
-        Review.query.filter_by(professional_id=prof.id).delete(synchronize_session=False)
+        Review.query.filter_by(professional_id=prof.id).delete(
+            synchronize_session=False)
         # remover perfil profissional
         db.session.delete(prof)
 
@@ -364,12 +396,13 @@ def excluir_proprio_usuario():
     db.session.delete(user)
     db.session.commit()
 
-    flash("Conta excluída com sucesso!", "success")
     return redirect(url_for('index'))
 
 # --------------------------
 # API – validar CEP
 # --------------------------
+
+
 @app.route('/api/validar-cep/<string:cep>')
 def api_validate_cep(cep):
     data = validate_cep_garanhuns(cep)
@@ -380,6 +413,8 @@ def api_validate_cep(cep):
 # --------------------------
 # CATEGORIAS CRUD (PROTEGIDAS PELO ADMIN)
 # --------------------------
+
+
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
     menssagem = None
@@ -397,6 +432,7 @@ def admin():
 
     return render_template('admin/login_admin.html', menssagem=menssagem)
 
+
 @app.route('/logout_admin')
 def logout_admin():
     if 'usuario' in session:
@@ -404,11 +440,13 @@ def logout_admin():
         return redirect(url_for('admin'))
     else:
         return redirect(url_for('admin'))
-    
+
+
 @app.route('/admin/categorias/listar')
 def listar_categorias():
     categorias = ServiceCategory.query.all()
     return render_template('admin/categorias/listar.html', categorias=categorias)
+
 
 @app.route('/admin/categorias/criar', methods=['GET', 'POST'])
 def adicionar_categoria():
@@ -460,7 +498,8 @@ def editar_categoria(id):
             # categoria.image = imagem_base64  ← se tiver o campo
 
         categoria.name = (request.form.get('name') or categoria.name).strip()
-        categoria.description = (request.form.get('description') or categoria.description).strip()
+        categoria.description = (request.form.get(
+            'description') or categoria.description).strip()
 
         db.session.commit()
         flash('Categoria atualizada.', 'success')
@@ -474,7 +513,8 @@ def deletar_categoria(id):
     categoria = ServiceCategory.query.get_or_404(id)
     # evita exclusão se houver profissionais vinculados
     try:
-        has_profs = (categoria.professionals is not None) and (len(categoria.professionals) > 0)
+        has_profs = (categoria.professionals is not None) and (
+            len(categoria.professionals) > 0)
     except Exception:
         # caso relationship seja dynamic ou outro tipo, tente count
         try:
@@ -493,25 +533,31 @@ def deletar_categoria(id):
 # --------------------------
 # PROFISSÕES CRUD
 # --------------------------
+
+
 @app.route('/admin/profissoes')
 def listar_profissoes():
     profs = Professional.query.order_by(Professional.created_at.desc()).all()
     return render_template('admin/profissoes/listar.html', profissoes=profs)
+
 
 @app.route('/admin/profissoes/criar', methods=['GET', 'POST'])
 def adicionar_profissao():
     categories = ServiceCategory.query.order_by(ServiceCategory.name).all()
     if request.method == 'POST':
         try:
-            category_id = int(request.form.get('category_id')) if request.form.get('category_id') else None
+            category_id = int(request.form.get('category_id')
+                              ) if request.form.get('category_id') else None
         except ValueError:
             category_id = None
         prof = Professional(
             user_id=current_user.id,
             category_id=category_id,
             bio=(request.form.get('bio') or '').strip(),
-            experience_years=int(request.form.get('experience_years')) if request.form.get('experience_years') else None,
-            starting_price=float(request.form.get('starting_price')) if request.form.get('starting_price') else None,
+            experience_years=int(request.form.get('experience_years')) if request.form.get(
+                'experience_years') else None,
+            starting_price=float(request.form.get('starting_price')) if request.form.get(
+                'starting_price') else None,
             response_time=request.form.get('response_time') or '24 horas',
             created_at=datetime.utcnow()
         )
@@ -521,6 +567,7 @@ def adicionar_profissao():
         return redirect(url_for('dashboard'))
     return render_template('admin/profissoes/criar.html', categories=categories)
 
+
 @app.route('/admin/profissoes/editar/<int:id>', methods=['GET', 'POST'])
 def editar_profissao(id):
     prof = Professional.query.get_or_404(id)
@@ -529,15 +576,20 @@ def editar_profissao(id):
         return redirect(url_for('dashboard'))
     categories = ServiceCategory.query.order_by(ServiceCategory.name).all()
     if request.method == 'POST':
-        prof.category_id = int(request.form.get('category_id')) if request.form.get('category_id') else None
+        prof.category_id = int(request.form.get(
+            'category_id')) if request.form.get('category_id') else None
         prof.bio = (request.form.get('bio') or prof.bio).strip()
-        prof.experience_years = int(request.form.get('experience_years')) if request.form.get('experience_years') else None
-        prof.starting_price = float(request.form.get('starting_price')) if request.form.get('starting_price') else None
-        prof.response_time = request.form.get('response_time') or prof.response_time
+        prof.experience_years = int(request.form.get(
+            'experience_years')) if request.form.get('experience_years') else None
+        prof.starting_price = float(request.form.get(
+            'starting_price')) if request.form.get('starting_price') else None
+        prof.response_time = request.form.get(
+            'response_time') or prof.response_time
         db.session.commit()
         flash('Perfil atualizado.', 'success')
         return redirect(url_for('dashboard'))
     return render_template('admin/profissoes/editar.html', prof=prof, categories=categories)
+
 
 @app.route('/admin/profissoes/excluir/<int:id>', methods=['POST'])
 def deletar_profissao(id):
@@ -546,7 +598,8 @@ def deletar_profissao(id):
         flash('Acesso negado.', 'danger')
         return redirect(url_for('listar_profissoes'))
     # Remove reviews associados ao profissional
-    Review.query.filter_by(professional_id=prof.id).delete(synchronize_session=False)
+    Review.query.filter_by(professional_id=prof.id).delete(
+        synchronize_session=False)
     db.session.delete(prof)
     db.session.commit()
     flash('Perfil profissional excluído.', 'success')
@@ -555,6 +608,8 @@ def deletar_profissao(id):
 # --------------------------
 # EDITAR PERFIL DO USUÁRIO
 # --------------------------
+
+
 @app.route('/usuarios/perfil/editar', methods=['GET', 'POST'])
 @login_required
 def editar_perfil():
