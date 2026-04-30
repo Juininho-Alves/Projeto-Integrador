@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base_dashboard.html" %}
 
 {% block title %}Buscar Profissionais - Conectando Serviços{% endblock %}
 
@@ -6,56 +6,68 @@
 <section class="section">
     <div class="container">
         <h1 class="page-title">Buscar Profissionais</h1>
-        
         <form action="{{ url_for('search') }}" method="get" class="search-filters">
-            <div class="filter-group">
-                <select name="category" class="form-input">
-                    <option value="">Todas as Categorias</option>
-                    {% for category in categories %}
-                        <option value="{{ category.id }}" {% if request.args.get('category') == category.id|string %}selected{% endif %}>
-                            {{ category.name }}
-                        </option>
-                    {% endfor %}
-                </select>
+            <div class="row">
+                <div class="col">
+                    <select name="category" class="form-input form-control">
+                        <option value="">Todas as Categorias</option>
+                        {% for category in categories %}
+                            <option value="{{ category.id }}" {% if request.args.get('category') == category.id|string %}selected{% endif %}>
+                                {{ category.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Buscar
+                    </button>
+                </div>
             </div>
-            
-            <div class="filter-group">
-                <input type="text" name="city" placeholder="Cidade" class="form-input" value="{{ request.args.get('city', '') }}">
-            </div>
-            
-            <button type="submit" class="btn-primary">
-                <i class="fas fa-search"></i> Buscar
-            </button>
         </form>
         
-        <div class="professionals-grid">
+        <hr>
+
             {% if professionals %}
                 {% for prof in professionals %}
-                    <div class="professional-card">
-                        <div class="prof-photo">
-                            <i class="fas fa-user-circle"></i>
+                        <div class="card" style="width: 18rem;">
+                            <p class="text-center">
+                                <i class="fas fa-user-circle mt-4 fs-5"></i>  
+                            </p>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col">
+                                         <h5 class="card-title fs-4 text-center">{{ prof.user.name }}</h5>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col">
+                                        <p class="card-text text-center">{{ prof.category.name }}</p>
+                                    </div>
+                                </div>
+                                  <hr>
+                                <div class="rating text-center">
+                                    {% for i in range(5) %}
+                                        {% if i < prof.average_rating %}
+                                            <i class="fas fa-star"></i>
+                                        {% else %}
+                                            <i class="far fa-star"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                    <span>({{ prof.review_count }})</span>
+                                </div>
+                                    <hr>
+                                    <p class="location text-center"><i class="fas fa-map-marker-alt"></i> {{ prof.user.city }}, {{ prof.user.state }}</p>
+                                        {% if prof.starting_price %}
+                                            <p class="price text-center">A partir de R$ {{ "%.2f"|format(prof.starting_price) }}</p>
+                                        {% endif %}
+                                    <hr>
+                                
+                                        <a style="margin-left: 4.7em;" href="#" class="btn btn-primary">Ver Perfil</a>
+                                    
+                                </div>
+                            </div>
                         </div>
-                        <h3>{{ prof.user.name }}</h3>
-                        <p class="category">{{ prof.category.name }}</p>
-                        
-                        <div class="rating">
-                            {% for i in range(5) %}
-                                {% if i < prof.average_rating %}
-                                    <i class="fas fa-star"></i>
-                                {% else %}
-                                    <i class="far fa-star"></i>
-                                {% endif %}
-                            {% endfor %}
-                            <span>({{ prof.review_count }})</span>
-                        </div>
-                        
-                        <p class="location"><i class="fas fa-map-marker-alt"></i> {{ prof.user.city }}, {{ prof.user.state }}</p>
-                        
-                        {% if prof.starting_price %}
-                            <p class="price">A partir de R$ {{ "%.2f"|format(prof.starting_price) }}</p>
-                        {% endif %}
-                        
-                        <a href="{{ url_for('complete_professional_profile', professional_id=prof.id) }}" class="btn-primary btn-block">Ver Perfil</a>
                     </div>
                 {% endfor %}
             {% else %}
@@ -65,7 +77,7 @@
                     <p>Tente ajustar os filtros de busca</p>
                 </div>
             {% endif %}
-        </div>
+    
     </div>
 </section>
 {% endblock %}
